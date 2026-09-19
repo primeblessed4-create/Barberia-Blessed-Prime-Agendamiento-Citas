@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbería Blessed Prime - Citas Online</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0b0e',
+                        cardBg: '#141418',
+                        accentGlow: 'rgba(255, 255, 255, 0.15)',
+                        borderGlow: '#2e2e38',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        neon: '0 0 20px rgba(255, 255, 255, 0.15)',
+                        neonHover: '0 0 25px rgba(255, 255, 255, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0b0e;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0b0e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+
+        .time-slot {
+            transition: all 0.2s ease-in-out;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-white selection:text-black">
+
+    <!-- Header/Navbar -->
+    <header class="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full border border-white flex items-center justify-center bg-black shadow-neon">
+                    <i class="fa-solid fa-scissors text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-widest text-white uppercase">Blessed <span class="font-light text-gray-400">Prime</span></h1>
+                    <p class="text-xs text-gray-400 flex items-center gap-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        Barbería & Estilo
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="openModal('adminModal')" class="text-xs bg-zinc-900 hover:bg-zinc-800 text-gray-300 hover:text-white px-3 py-2 rounded-lg border border-zinc-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                    <span class="hidden sm:inline">Administrar</span>
+                </button>
+                <a href="https://wa.me/573106506829" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-lg shadow-emerald-900/30">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span class="hidden sm:inline">WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-grow">
+
+        <!-- Hero Section -->
+        <div class="text-center mb-10">
+            <div class="inline-block p-1.5 px-4 mb-3 rounded-full bg-zinc-900 border border-zinc-700 text-xs font-medium text-gray-300">
+                <i class="fa-regular fa-clock mr-1 text-white"></i> Lun - Sáb: 10 AM - 8 PM | Dom: 10 AM - 5 PM
+            </div>
+            <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight mb-3">
+                RESERVA TU EXPERIENCIA
+            </h2>
+            <p class="text-gray-400 max-w-lg mx-auto text-sm sm:text-base">
+                Elige el servicio de tu preferencia, selecciona tu día y confirma tu cita al instante en tiempo real.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Steps Form -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- STEP 1: Select Service -->
+                <div class="bg-cardBg p-6 rounded-2xl border border-zinc-800/80 shadow-xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-white text-black text-sm flex items-center justify-center font-bold">1</span>
+                        Selecciona el Servicio
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Service Option 1 -->
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="service" value="Corte de cabello" data-price="20000" data-time="35" class="peer sr-only" checked onchange="updateServiceSelection()">
+                            <div class="p-4 rounded-xl bg-zinc-900/60 border-2 border-zinc-800 peer-checked:border-white peer-checked:bg-zinc-800/80 transition-all flex flex-col justify-between h-full hover:border-zinc-600">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="w-9 h-9 rounded-lg bg-black flex items-center justify-center border border-zinc-700">
+                                        <i class="fa-solid fa-scissors text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-gray-300 border border-zinc-700">35 min</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Corte de Cabello</h4>
+                                    <p class="text-xs text-gray-400 mt-0.5">Corte moderno o clásico según tu preferencia.</p>
+                                    <p class="text-base font-extrabold text-white mt-2">$20.000 <span class="text-[10px] text-gray-400 font-normal">COP</span></p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Service Option 2 -->
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="service" value="Corte y barba" data-price="25000" data-time="45" class="peer sr-only" onchange="updateServiceSelection()">
+                            <div class="p-4 rounded-xl bg-zinc-900/60 border-2 border-zinc-800 peer-checked:border-white peer-checked:bg-zinc-800/80 transition-all flex flex-col justify-between h-full hover:border-zinc-600">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="w-9 h-9 rounded-lg bg-black flex items-center justify-center border border-zinc-700">
+                                        <i class="fa-solid fa-user-ninja text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-gray-300 border border-zinc-700">45 min</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Corte y Barba</h4>
+                                    <p class="text-xs text-gray-400 mt-0.5">Servicio combo de cabello y perfilado de barba.</p>
+                                    <p class="text-base font-extrabold text-white mt-2">$25.000 <span class="text-[10px] text-gray-400 font-normal">COP</span></p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Service Option 3 -->
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="service" value="Corte y barba a vapor" data-price="30000" data-time="60" class="peer sr-only" onchange="updateServiceSelection()">
+                            <div class="p-4 rounded-xl bg-zinc-900/60 border-2 border-zinc-800 peer-checked:border-white peer-checked:bg-zinc-800/80 transition-all flex flex-col justify-between h-full hover:border-zinc-600">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="w-9 h-9 rounded-lg bg-black flex items-center justify-center border border-zinc-700">
+                                        <i class="fa-solid fa-cloud text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-gray-300 border border-zinc-700">60 min</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Corte y Barba a Vapor</h4>
+                                    <p class="text-xs text-gray-400 mt-0.5">Tratamiento de barba con vapor ozono relajante.</p>
+                                    <p class="text-base font-extrabold text-white mt-2">$30.000 <span class="text-[10px] text-gray-400 font-normal">COP</span></p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Service Option 4 -->
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="service" value="Barba" data-price="10000" data-time="20" class="peer sr-only" onchange="updateServiceSelection()">
+                            <div class="p-4 rounded-xl bg-zinc-900/60 border-2 border-zinc-800 peer-checked:border-white peer-checked:bg-zinc-800/80 transition-all flex flex-col justify-between h-full hover:border-zinc-600">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="w-9 h-9 rounded-lg bg-black flex items-center justify-center border border-zinc-700">
+                                        <i class="fa-solid fa-user-tie text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-gray-300 border border-zinc-700">20 min</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Barba</h4>
+                                    <p class="text-xs text-gray-400 mt-0.5">Perfilado, toalla caliente y delineado impecable.</p>
+                                    <p class="text-base font-extrabold text-white mt-2">$10.000 <span class="text-[10px] text-gray-400 font-normal">COP</span></p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Service Option 5 -->
+                        <label class="relative cursor-pointer sm:col-span-2">
+                            <input type="radio" name="service" value="Cerquillo y barba" data-price="15000" data-time="20" class="peer sr-only" onchange="updateServiceSelection()">
+                            <div class="p-4 rounded-xl bg-zinc-900/60 border-2 border-zinc-800 peer-checked:border-white peer-checked:bg-zinc-800/80 transition-all flex flex-col justify-between h-full hover:border-zinc-600">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="w-9 h-9 rounded-lg bg-black flex items-center justify-center border border-zinc-700">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-gray-300 border border-zinc-700">20 min</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">Cerquillo y Barba</h4>
+                                    <p class="text-xs text-gray-400 mt-0.5">Ajuste y marcación de bordes de cabello y arreglo de barba.</p>
+                                    <p class="text-base font-extrabold text-white mt-2">$15.000 <span class="text-[10px] text-gray-400 font-normal">COP</span></p>
+                                </div>
+                            </div>
+                        </label>
+
+                    </div>
+                </div>
+
+                <!-- STEP 2: Date & Time Picker -->
+                <div class="bg-cardBg p-6 rounded-2xl border border-zinc-800/80 shadow-xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-white text-black text-sm flex items-center justify-center font-bold">2</span>
+                        Elige Fecha y Horario
+                    </h3>
+
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Selecciona un día</label>
+                            <span id="dayScheduleNotice" class="text-xs text-amber-400/90 font-medium bg-amber-950/40 px-2.5 py-1 rounded-md border border-amber-800/50">
+                                Horario normal: 10:00 AM - 8:00 PM
+                            </span>
+                        </div>
+                        <input type="date" id="appointmentDate" class="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition" onchange="renderTimeSlots()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Horarios Disponibles</label>
+                            <span class="text-xs text-gray-400 flex items-center gap-3">
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-zinc-800 border border-zinc-600 inline-block"></span> Libre</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-900/60 border border-red-600 inline-block"></span> Reservado</span>
+                            </span>
+                        </div>
+
+                        <!-- Slots Grid -->
+                        <div id="timeSlotsContainer" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 min-h-[140px] items-center">
+                            <p class="text-gray-500 text-sm col-span-full text-center py-6">Cargando horarios...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Personal Information -->
+                <div class="bg-cardBg p-6 rounded-2xl border border-zinc-800/80 shadow-xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-white text-black text-sm flex items-center justify-center font-bold">3</span>
+                        Tus Datos
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Nombre Completo</label>
+                            <input type="text" id="clientName" placeholder="Ej. Juan Pérez" class="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition placeholder-gray-600 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Teléfono / WhatsApp</label>
+                            <input type="tel" id="clientPhone" placeholder="Ej. 3101234567" class="w-full bg-zinc-900 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition placeholder-gray-600 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Summary Card -->
+            <div class="lg:col-span-4">
+                <div class="bg-cardBg p-6 rounded-2xl border border-zinc-800/80 shadow-xl sticky top-24">
+                    <h3 class="text-lg font-bold text-white mb-4 pb-3 border-b border-zinc-800 flex items-center justify-between">
+                        <span>Resumen de Cita</span>
+                        <i class="fa-solid fa-receipt text-gray-500"></i>
+                    </h3>
+
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <span class="text-xs text-gray-500 block uppercase font-medium">Servicio</span>
+                            <span id="summaryService" class="font-semibold text-white text-base">Corte de Cabello</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-xs text-gray-500 block uppercase font-medium">Duración</span>
+                                <span id="summaryDuration" class="font-medium text-gray-300">35 minutos</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-500 block uppercase font-medium">Precio</span>
+                                <span id="summaryPrice" class="font-medium text-white">$20.000 COP</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-zinc-800/60">
+                            <span class="text-xs text-gray-500 block uppercase font-medium">Fecha</span>
+                            <span id="summaryDate" class="font-medium text-gray-200">No seleccionada</span>
+                        </div>
+
+                        <div>
+                            <span class="text-xs text-gray-500 block uppercase font-medium">Hora</span>
+                            <span id="summaryTime" class="font-medium text-gray-200">No seleccionada</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-zinc-800">
+                        <button id="confirmBtn" onclick="processBooking()" class="w-full bg-white hover:bg-gray-200 text-black font-extrabold py-3.5 px-4 rounded-xl transition shadow-neon hover:shadow-neonHover flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <span>Confirmar Cita</span>
+                        </button>
+                        <p class="text-[11px] text-gray-500 text-center mt-3">
+                            <i class="fa-solid fa-shield-halved mr-1"></i> Agendamiento seguro e inmediato.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t border-zinc-800 py-6 px-4 mt-12 text-center text-xs text-gray-500">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p>© <span id="year"></span> Barbería Blessed Prime. Todos los derechos reservados.</p>
+            <p class="flex items-center gap-4">
+                <span><i class="fa-solid fa-phone mr-1"></i> 310 650 6829</span>
+                <span><i class="fa-solid fa-location-dot mr-1"></i> Barbería & Servicio Técnico</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- SUCCESS CONFIRMATION MODAL -->
+    <div id="successModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative">
+            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40">
+                <i class="fa-solid fa-check text-2xl"></i>
+            </div>
+            <h3 class="text-2xl font-black text-white mb-2">¡Cita Registrada!</h3>
+            <p class="text-gray-300 text-sm mb-6">
+                Tu horario ha quedado reservado en nuestro sistema. Haz clic abajo para enviar los detalles a nuestro WhatsApp y confirmar.
+            </p>
+
+            <div class="bg-black/60 rounded-xl p-4 text-left text-xs space-y-2 mb-6 border border-zinc-800">
+                <div class="flex justify-between"><span class="text-gray-500">Servicio:</span> <span id="modalService" class="font-semibold text-white"></span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Fecha:</span> <span id="modalDate" class="font-semibold text-white"></span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Hora:</span> <span id="modalTime" class="font-semibold text-white"></span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Cliente:</span> <span id="modalClient" class="font-semibold text-white"></span></div>
+            </div>
+
+            <div class="space-y-3">
+                <a id="whatsappLink" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/40">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span>Enviar Cita por WhatsApp</span>
+                </a>
+                <button onclick="closeModal('successModal')" class="w-full bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-medium py-2.5 px-4 rounded-xl transition text-sm">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL -->
+    <div id="adminModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('adminModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-gray-400"></i>
+                Gestión de Citas Agendadas
+            </h3>
+            <p class="text-xs text-gray-400 mb-6">Listado de reservas activas guardadas en la base de datos local.</p>
+
+            <div class="max-h-80 overflow-y-auto mb-6 pr-1">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-black text-gray-400 uppercase text-[10px] tracking-wider sticky top-0">
+                        <tr>
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Servicio</th>
+                            <th class="p-3">Fecha & Hora</th>
+                            <th class="p-3 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminAppointmentsList" class="divide-y divide-zinc-800 text-gray-300">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center pt-4 border-t border-zinc-800">
+                <button onclick="clearAllAppointments()" class="bg-red-900/40 hover:bg-red-800/60 text-red-300 border border-red-700/50 px-3 py-2 rounded-lg text-xs font-semibold transition">
+                    <i class="fa-solid fa-trash mr-1"></i> Borrar Todo
+                </button>
+                <button onclick="closeModal('adminModal')" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERT TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-red-600 text-white px-5 py-3 rounded-xl shadow-2xl border border-red-400 z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 max-w-md">
+        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        <span id="toastMsg" class="text-xs sm:text-sm font-medium"></span>
+    </div>
+
+    <script>
+        // Business Constants & State
+        const PHONE_NUMBER = "573106506829";
+
+        let selectedService = { name: "Corte de cabello", price: 20000, time: 35 };
+        let selectedDate = "";
+        let selectedTime = "";
+
+        // DOM Elements
+        const dateInput = document.getElementById('appointmentDate');
+        const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+
+        // Initialize App
+        window.onload = function() {
+            document.getElementById('year').innerText = new Date().getFullYear();
+            
+            // Set default date to today
+            const today = new Date();
+            const formattedToday = today.toISOString().split('T')[0];
+            dateInput.min = formattedToday;
+            dateInput.value = formattedToday;
+            selectedDate = formattedToday;
+
+            updateServiceSelection();
+            renderTimeSlots();
+        };
+
+        // Update selected service state
+        function updateServiceSelection() {
+            const radio = document.querySelector('input[name="service"]:checked');
+            if (radio) {
+                selectedService = {
+                    name: radio.value,
+                    price: parseInt(radio.getAttribute('data-price')),
+                    time: parseInt(radio.getAttribute('data-time'))
+                };
+                document.getElementById('summaryService').innerText = selectedService.name;
+                document.getElementById('summaryDuration').innerText = `${selectedService.time} minutos`;
+                document.getElementById('summaryPrice').innerText = `$${selectedService.price.toLocaleString('es-CO')} COP`;
+            }
+        }
+
+        // Get stored appointments from localStorage
+        function getStoredAppointments() {
+            const data = localStorage.getItem('blessed_prime_appointments');
+            return data ? JSON.parse(data) : [];
+        }
+
+        // Save appointments array to localStorage
+        function saveAppointments(appointments) {
+            localStorage.setItem('blessed_prime_appointments', JSON.stringify(appointments));
+        }
+
+        // Generate Time Slots based on day (Mon-Sat: 10AM-8PM, Sun: 10AM-5PM)
+        function generateSlotsForDate(dateString) {
+            if (!dateString) return [];
+            
+            const parts = dateString.split('-');
+            // Create date object (Month is 0-indexed)
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+            const startHour = 10; // 10:00 AM
+            // Sunday closes at 5:00 PM (17:00), Monday-Saturday closes at 8:00 PM (20:00)
+            const endHour = (dayOfWeek === 0) ? 17 : 20;
+
+            const slots = [];
+            for (let hour = startHour; hour < endHour; hour++) {
+                slots.push(formatTime(hour, 0));
+                slots.push(formatTime(hour, 30));
+            }
+            return { slots, isSunday: dayOfWeek === 0 };
+        }
+
+        function formatTime(hour, minutes) {
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            const displayMinutes = minutes === 0 ? '00' : minutes;
+            return `${displayHour}:${displayMinutes} ${period}`;
+        }
+
+        // Render available time slots for the selected date
+        function renderTimeSlots() {
+            selectedDate = dateInput.value;
+            selectedTime = ""; // Reset time selection when date changes
+            
+            document.getElementById('summaryDate').innerText = formatDateReadable(selectedDate);
+            document.getElementById('summaryTime').innerText = "No seleccionada";
+
+            if (!selectedDate) {
+                timeSlotsContainer.innerHTML = `<p class="text-gray-500 text-sm col-span-full text-center py-6">Por favor elige una fecha válida.</p>`;
+                return;
+            }
+
+            const { slots: availableSlots, isSunday } = generateSlotsForDate(selectedDate);
+
+            // Update Schedule Notice Banner
+            const scheduleNotice = document.getElementById('dayScheduleNotice');
+            if (isSunday) {
+                scheduleNotice.innerHTML = `<i class="fa-solid fa-sun mr-1 text-amber-400"></i> Domingo: 10:00 AM - 5:00 PM`;
+                scheduleNotice.className = "text-xs text-amber-300 font-semibold bg-amber-950/60 px-2.5 py-1 rounded-md border border-amber-600/60";
+            } else {
+                scheduleNotice.innerHTML = `<i class="fa-solid fa-briefcase mr-1 text-gray-300"></i> Lun - Sáb: 10:00 AM - 8:00 PM`;
+                scheduleNotice.className = "text-xs text-gray-300 font-medium bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-700";
+            }
+
+            const allAppointments = getStoredAppointments();
+            const bookedTimesForDate = allAppointments
+                .filter(app => app.date === selectedDate)
+                .map(app => app.time);
+
+            timeSlotsContainer.innerHTML = "";
+
+            availableSlots.forEach(slot => {
+                const isBooked = bookedTimesForDate.includes(slot);
+                const button = document.createElement('button');
+                button.type = 'button';
+                
+                if (isBooked) {
+                    button.className = "time-slot p-2.5 rounded-xl border text-xs font-semibold bg-red-950/40 border-red-800/60 text-red-400 cursor-not-allowed opacity-75 relative group flex flex-col items-center justify-center";
+                    button.innerHTML = `
+                        <span>${slot}</span>
+                        <span class="text-[9px] uppercase tracking-wider text-red-500 font-bold">Reservado</span>
+                    `;
+                    button.onclick = () => showToast(`El horario de las ${slot} ya fue reservado por otro cliente.`);
+                } else {
+                    button.className = "time-slot p-2.5 rounded-xl border text-xs font-semibold bg-zinc-900 border-zinc-700/80 text-gray-200 hover:border-white hover:bg-zinc-800 focus:ring-2 focus:ring-white transition";
+                    button.innerText = slot;
+                    button.onclick = () => selectSlot(button, slot);
+                }
+
+                timeSlotsContainer.appendChild(button);
+            });
+        }
+
+        // Highlight selected time slot
+        function selectSlot(buttonElement, slotTime) {
+            document.querySelectorAll('#timeSlotsContainer button').forEach(btn => {
+                if (!btn.classList.contains('bg-red-950/40')) {
+                    btn.className = "time-slot p-2.5 rounded-xl border text-xs font-semibold bg-zinc-900 border-zinc-700/80 text-gray-200 hover:border-white hover:bg-zinc-800 transition";
+                }
+            });
+
+            buttonElement.className = "time-slot p-2.5 rounded-xl border-2 text-xs font-bold bg-white text-black border-white shadow-neon scale-105 transition";
+            selectedTime = slotTime;
+            document.getElementById('summaryTime').innerText = selectedTime;
+        }
+
+        // Format Date to spanish readable format
+        function formatDateReadable(dateStr) {
+            if (!dateStr) return "No seleccionada";
+            const parts = dateStr.split('-');
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return dateObj.toLocaleDateString('es-ES', options);
+        }
+
+        // Process and Validate Booking
+        function processBooking() {
+            const nameInput = document.getElementById('clientName').value.trim();
+            const phoneInput = document.getElementById('clientPhone').value.trim();
+
+            if (!selectedDate) {
+                showToast("Por favor selecciona una fecha.");
+                return;
+            }
+            if (!selectedTime) {
+                showToast("Por favor selecciona un horario disponible.");
+                return;
+            }
+            if (!nameInput) {
+                showToast("Por favor ingresa tu nombre completo.");
+                document.getElementById('clientName').focus();
+                return;
+            }
+            if (!phoneInput) {
+                showToast("Por favor ingresa un número de teléfono.");
+                document.getElementById('clientPhone').focus();
+                return;
+            }
+
+            // Double check if time slot became booked
+            const appointments = getStoredAppointments();
+            const isAlreadyBooked = appointments.some(app => app.date === selectedDate && app.time === selectedTime);
+
+            if (isAlreadyBooked) {
+                showToast(`¡Atención! El horario de las ${selectedTime} fue ocupado recientemente. Por favor elige otro.`);
+                renderTimeSlots();
+                return;
+            }
+
+            // Create new appointment object
+            const newAppointment = {
+                id: Date.now(),
+                service: selectedService.name,
+                price: selectedService.price,
+                duration: selectedService.time,
+                date: selectedDate,
+                time: selectedTime,
+                clientName: nameInput,
+                clientPhone: phoneInput,
+                createdAt: new Date().toISOString()
+            };
+
+            // Save to LocalStorage
+            appointments.push(newAppointment);
+            saveAppointments(appointments);
+
+            // Re-render slots to block the time immediately
+            renderTimeSlots();
+
+            // Prepare WhatsApp link
+            const whatsappMessage = `Hola Barbería Blessed Prime! Quiero agendar una cita:\n\n` +
+                `✂️ *Servicio:* ${newAppointment.service}\n` +
+                `⏱️ *Duración:* ${newAppointment.duration} min\n` +
+                `💵 *Valor:* $${newAppointment.price.toLocaleString('es-CO')} COP\n` +
+                `📅 *Fecha:* ${formatDateReadable(newAppointment.date)}\n` +
+                `⏰ *Hora:* ${newAppointment.time}\n` +
+                `👤 *Nombre:* ${newAppointment.clientName}\n` +
+                `📱 *Teléfono:* ${newAppointment.clientPhone}`;
+
+            const encodedMessage = encodeURIComponent(whatsappMessage);
+            const waUrl = `https://wa.me/${PHONE_NUMBER}?text=${encodedMessage}`;
+
+            // Populate Modal Details
+            document.getElementById('modalService').innerText = `${newAppointment.service} ($${newAppointment.price.toLocaleString('es-CO')} COP)`;
+            document.getElementById('modalDate').innerText = formatDateReadable(newAppointment.date);
+            document.getElementById('modalTime').innerText = newAppointment.time;
+            document.getElementById('modalClient').innerText = newAppointment.clientName;
+            document.getElementById('whatsappLink').href = waUrl;
+
+            // Show Confirmation Modal
+            openModal('successModal');
+
+            // Reset Form Inputs
+            document.getElementById('clientName').value = "";
+            document.getElementById('clientPhone').value = "";
+        }
+
+        // Show Admin Modal & Populate
+        function renderAdminAppointments() {
+            const appointments = getStoredAppointments();
+            const tbody = document.getElementById('adminAppointmentsList');
+            tbody.innerHTML = "";
+
+            if (appointments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">No hay citas registradas.</td></tr>`;
+                return;
+            }
+
+            // Sort appointments by date and time
+            appointments.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+
+            appointments.forEach(app => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-zinc-800 hover:bg-zinc-800/40";
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-semibold text-white">${app.clientName}</div>
+                        <div class="text-[10px] text-gray-500">${app.clientPhone}</div>
+                    </td>
+                    <td class="p-3 font-medium text-gray-300">${app.service}</td>
+                    <td class="p-3">
+                        <div>${app.date}</div>
+                        <div class="text-white font-semibold">${app.time}</div>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteAppointment(${app.id})" class="text-red-400 hover:text-red-300 p-1.5 rounded hover:bg-red-950/30 transition" title="Cancelar cita">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Delete specific appointment
+        function deleteAppointment(id) {
+            let appointments = getStoredAppointments();
+            appointments = appointments.filter(app => app.id !== id);
+            saveAppointments(appointments);
+            renderAdminAppointments();
+            renderTimeSlots();
+            showToast("Cita eliminada correctamente.");
+        }
+
+        // Clear all appointments
+        function clearAllAppointments() {
+            if (confirm("¿Estás seguro de que deseas borrar todas las citas guardadas?")) {
+                localStorage.removeItem('blessed_prime_appointments');
+                renderAdminAppointments();
+                renderTimeSlots();
+                showToast("Se han eliminado todas las citas.");
+            }
+        }
+
+        // Modal Helpers
+        function openModal(modalId) {
+            if (modalId === 'adminModal') {
+                renderAdminAppointments();
+            }
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Toast Notification Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
