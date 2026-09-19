@@ -90,7 +90,7 @@
       <div class="text-center space-y-2">
         <h2 class="text-3xl font-extrabold text-white tracking-tight">Agenda tu Cita</h2>
         <p class="text-gray-400 text-sm max-w-md mx-auto">
-          Selecciona tu barbero de preferencia, el servicio y tu horario ideal. Confirma tu cita directamente por WhatsApp.
+          Selecciona tu barbero, el servicio y tu horario ideal. El tiempo exacto del servicio quedará reservado automáticamente.
         </p>
       </div>
 
@@ -102,7 +102,7 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="barbers-grid">
-          <!-- Dynamic Barbers will load here -->
+          <!-- Dynamic Barbers -->
         </div>
       </section>
 
@@ -114,7 +114,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="services-grid">
-          <!-- Dynamic Services will load here -->
+          <!-- Dynamic Services -->
         </div>
       </section>
 
@@ -333,10 +333,8 @@
     }
 
     const WHATSAPP_NUMBER = "573106506829";
-    const ADMIN_PIN = "2168"; // PIN Modificado
+    const ADMIN_PIN = "2168";
 
-    // BARBEROS Y DÍAS DE TRABAJO
-    // Días de la semana: 0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb
     const BARBERS = [
       {
         id: "jaider",
@@ -352,12 +350,13 @@
       }
     ];
 
+    // SERVICIOS CON DURACIÓN EN MINUTOS
     const SERVICES = [
-      { id: "corte", name: "Corte de cabello", price: 20000, duration: "35 min", icon: "scissors" },
-      { id: "corte_barba", name: "Corte y barba", price: 25000, duration: "45 min", icon: "user-check" },
-      { id: "corte_barba_vapor", name: "Corte y barba a vapor", price: 30000, duration: "60 min", icon: "sparkles" },
-      { id: "barba", name: "Barba", price: 10000, duration: "20 min", icon: "smile" },
-      { id: "cerquillo_barba", name: "Cerquillo y barba", price: 15000, duration: "20 min", icon: "zap" }
+      { id: "corte", name: "Corte de cabello", price: 20000, duration: "35 min", durationMinutes: 35, icon: "scissors" },
+      { id: "corte_barba", name: "Corte y barba", price: 25000, duration: "45 min", durationMinutes: 45, icon: "user-check" },
+      { id: "corte_barba_vapor", name: "Corte y barba a vapor", price: 30000, duration: "60 min", durationMinutes: 60, icon: "sparkles" },
+      { id: "barba", name: "Barba", price: 10000, duration: "20 min", durationMinutes: 20, icon: "smile" },
+      { id: "cerquillo_barba", name: "Cerquillo y barba", price: 15000, duration: "20 min", durationMinutes: 20, icon: "zap" }
     ];
 
     // ESTADO DE LA APLICACIÓN
@@ -413,10 +412,11 @@
       listenForBookings();
     });
 
+    // INICIALIZAR DATE PICKER RESTRINGIENDO DÍAS PASADOS
     function initDatePicker() {
       const today = new Date().toISOString().split('T')[0];
       bookingDateInput.value = today;
-      bookingDateInput.min = today;
+      bookingDateInput.min = today; // Bloquea selección de días anteriores
       adminFilterDate.value = today;
       selectedDate = today;
     }
@@ -443,6 +443,7 @@
           selectedBarber = BARBERS.find(b => b.id === id);
           selectedTime = null;
           checkBarberAvailability();
+          renderTimeSlots();
           updateSummary();
         });
       });
@@ -473,14 +474,22 @@
           card.classList.add('border-white', 'bg-white/10', 'neon-border');
           const id = card.getAttribute('data-id');
           selectedService = SERVICES.find(s => s.id === id);
+          renderTimeSlots();
           updateSummary();
         });
       });
     }
 
-    // VERIFICAR DISPONIBILIDAD DEL BARBERO SEGÚN LA FECHA
+    // VERIFICAR DISPONIBILIDAD DEL BARBERO Y VALIDAR FECHAS
     function checkBarberAvailability() {
       if (!selectedDate) return true;
+
+      // Validación extra para evitar ingresar fechas pasadas manualmente
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (selectedDate < todayStr) {
+        selectedDate = todayStr;
+        bookingDateInput.value = todayStr;
+      }
 
       const parts = selectedDate.split('-');
       const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -506,29 +515,43 @@
       return true;
     }
 
-    // GENERAR BLOQUES DE HORARIO
+    // UTILERÍA: CONVERTIR HORAS Y MINUTOS
+    function timeToMinutes(timeStr) {
+      // timeStr Ej: "10:00 AM", "02:30 PM"
+      const [time, modifier] = timeStr.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      if (modifier === 'PM' && hours < 12) hours += 12;
+      if (modifier === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+
+    function minutesToTime(totalMinutes) {
+      let hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+      return `${hours}:${strMinutes} ${ampm}`;
+    }
+
+    // GENERAR BLOQUES EN INTERVALOS DE 10 MINUTOS PARA PERMITIR HORARIOS EXACTOS
     function generateSlotsForDate(dateString) {
       const parts = dateString.split('-');
       const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
       const isSunday = (dateObj.getDay() === 0);
       
-      const startHour = 10;
-      const endHour = isSunday ? 17 : 20; // 5:00 PM el Domingo, 8:00 PM resto de días
+      const startMinutes = 10 * 60; // 10:00 AM
+      const endMinutes = (isSunday ? 17 : 20) * 60; // 5:00 PM o 8:00 PM
       
       const slots = [];
-      for (let hour = startHour; hour <= endHour; hour++) {
-        const formattedHour = hour > 12 ? hour - 12 : hour;
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        
-        slots.push(`${formattedHour}:00 ${ampm}`);
-        if (hour < endHour) {
-          slots.push(`${formattedHour}:30 ${ampm}`);
-        }
+      for (let m = startMinutes; m < endMinutes; m += 10) {
+        slots.push(minutesToTime(m));
       }
       return slots;
     }
 
-    // RENDERIZAR BLOQUES DE HORARIO
+    // RENDERIZAR BLOQUES Y BLOQUEAR INTERVALOS POR DURACIÓN DE CITAS
     function renderTimeSlots() {
       if (!selectedBarber) {
         timeSlotsContainer.innerHTML = `<p class="col-span-full text-xs text-gray-500 text-center py-4">Primero selecciona a tu barbero en el Paso 1.</p>`;
@@ -541,19 +564,36 @@
 
       const slots = generateSlotsForDate(selectedDate);
       
-      const bookedTimesForDate = activeBookings
-        .filter(b => b.date === selectedDate && b.barberId === selectedBarber.id && b.status !== 'cancelled')
-        .map(b => b.time);
+      // Obtener citas activas del barbero en la fecha seleccionada
+      const barberBookings = activeBookings.filter(
+        b => b.date === selectedDate && b.barberId === selectedBarber.id && b.status !== 'cancelled'
+      );
+
+      // Calcular intervalos ocupados [inicio, fin) en minutos
+      const occupiedIntervals = barberBookings.map(b => {
+        const start = timeToMinutes(b.time);
+        const duration = b.durationMinutes || 35; // 35 por defecto si es antiguo
+        return { start, end: start + duration };
+      });
+
+      const currentServiceDuration = selectedService ? selectedService.durationMinutes : 35;
 
       timeSlotsContainer.innerHTML = slots.map(slot => {
-        const isBooked = bookedTimesForDate.includes(slot);
+        const slotStart = timeToMinutes(slot);
+        const slotEnd = slotStart + currentServiceDuration;
+
+        // Comprobar si esta hora o la duración del servicio que se planea solapa con una cita ya existente
+        const isBooked = occupiedIntervals.some(interval => {
+          return (slotStart < interval.end && slotEnd > interval.start);
+        });
+
         const isSelected = selectedTime === slot;
 
         if (isBooked) {
           return `
-            <button disabled class="slot-booked py-2.5 px-2 text-xs font-semibold rounded-xl border flex flex-col items-center justify-center opacity-70">
+            <button disabled class="slot-booked py-2 px-1 text-[11px] font-semibold rounded-xl border flex flex-col items-center justify-center opacity-60">
               <span>${slot}</span>
-              <span class="text-[9px] uppercase tracking-wider font-bold">Ocupado</span>
+              <span class="text-[8px] uppercase tracking-wider font-bold">Ocupado</span>
             </button>
           `;
         }
@@ -563,7 +603,7 @@
           : 'bg-black text-gray-300 border-brand-border hover:border-gray-500';
 
         return `
-          <button data-time="${slot}" class="time-slot-btn py-2.5 px-2 text-xs rounded-xl border transition-all ${activeClass}">
+          <button data-time="${slot}" class="time-slot-btn py-2 px-1 text-xs rounded-xl border transition-all ${activeClass}">
             ${slot}
           </button>
         `;
@@ -650,12 +690,22 @@
         return;
       }
 
-      const isAlreadyBooked = activeBookings.some(
-        b => b.date === selectedDate && b.barberId === selectedBarber.id && b.time === selectedTime && b.status !== 'cancelled'
+      // Validar solapamiento directo
+      const slotStart = timeToMinutes(selectedTime);
+      const slotEnd = slotStart + selectedService.durationMinutes;
+
+      const barberBookings = activeBookings.filter(
+        b => b.date === selectedDate && b.barberId === selectedBarber.id && b.status !== 'cancelled'
       );
 
-      if (isAlreadyBooked) {
-        alert("Lo sentimos, este horario acaba de ser ocupado con este barbero. Por favor elige otro horario.");
+      const isConflict = barberBookings.some(b => {
+        const bStart = timeToMinutes(b.time);
+        const bEnd = bStart + (b.durationMinutes || 35);
+        return (slotStart < bEnd && slotEnd > bStart);
+      });
+
+      if (isConflict) {
+        alert("Lo sentimos, este rango de tiempo choca con otra cita reservada. Por favor elige otro horario.");
         renderTimeSlots();
         return;
       }
@@ -665,6 +715,7 @@
         barberName: selectedBarber.name,
         serviceId: selectedService.id,
         serviceName: selectedService.name,
+        durationMinutes: selectedService.durationMinutes,
         price: selectedService.price,
         date: selectedDate,
         time: selectedTime,
@@ -679,7 +730,7 @@
         bookBtn.textContent = "Procesando...";
         await saveBookingData(newBooking);
 
-        const msg = `¡Hola Barbería Blessed Prime! 👋🏼%0A%0AQuiero confirmar mi reserva de cita:%0A💈 *Barbero:* ${selectedBarber.name}%0A✂️ *Servicio:* ${selectedService.name}%0A📅 *Fecha:* ${selectedDate}%0A⏰ *Hora:* ${selectedTime}%0A👤 *Nombre:* ${name}%0A📞 *Teléfono:* ${phone}%0A💰 *Valor:* $${selectedService.price.toLocaleString('es-CO')} COP`;
+        const msg = `¡Hola Barbería Blessed Prime! 👋🏼%0A%0AQuiero confirmar mi reserva de cita:%0A💈 *Barbero:* ${selectedBarber.name}%0A✂️ *Servicio:* ${selectedService.name} (${selectedService.duration})%0A📅 *Fecha:* ${selectedDate}%0A⏰ *Hora:* ${selectedTime}%0A👤 *Nombre:* ${name}%0A📞 *Teléfono:* ${phone}%0A💰 *Valor:* $${selectedService.price.toLocaleString('es-CO')} COP`;
         
         whatsappSendLink.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
         successModal.classList.remove('hidden');
@@ -704,6 +755,7 @@
       bookingDateInput.addEventListener('change', (e) => {
         selectedDate = e.target.value;
         selectedTime = null;
+        checkBarberAvailability();
         renderTimeSlots();
         updateSummary();
       });
@@ -797,7 +849,7 @@
               <span class="text-xs px-2 py-0.5 rounded-full ${b.status === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${b.status === 'cancelled' ? 'Cancelada' : 'Confirmada'}</span>
             </div>
             <p class="text-xs text-gray-300">💈 Barbero: <strong class="text-white">${b.barberName || 'Sin especificar'}</strong></p>
-            <p class="text-xs text-gray-400">✂️ ${b.serviceName} - <strong class="text-white">$${(b.price || 0).toLocaleString('es-CO')} COP</strong></p>
+            <p class="text-xs text-gray-400">✂️ ${b.serviceName} (${b.durationMinutes || 35} min) - <strong class="text-white">$${(b.price || 0).toLocaleString('es-CO')} COP</strong></p>
             <p class="text-xs text-gray-400">📅 ${b.date} a las <strong>${b.time}</strong></p>
             <p class="text-xs text-gray-500">📞 ${b.clientPhone}</p>
           </div>
