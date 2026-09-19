@@ -1,495 +1,844 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barbería Blessed Prime - Citas Online</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barbería Blessed Prime | Agendamiento de Citas</title>
   
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
           colors: {
-            gold: {
-              400: '#FBBF24',
-              500: '#F59E0B',
-              600: '#D97706',
+            brand: {
+              black: '#0b0b0e',
+              card: '#141419',
+              border: '#262630',
+              accent: '#ffffff',
+              glow: 'rgba(255, 255, 255, 0.15)',
+              gold: '#eab308'
             }
           }
         }
       }
     }
   </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0b0e;
+      color: #f3f4f6;
     }
-    .glass-card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .neon-border {
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .neon-glow-btn {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+    .slot-booked {
+      background-color: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      cursor: not-allowed;
     }
   </style>
-</head>
-<body class="min-h-screen font-sans pb-12">
 
-  <!-- Header / Navbar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-50 backdrop-blur-md">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg shadow-amber-500/20">
-          BP
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-white selection:text-black">
+
+  <!-- Header / Navigation -->
+  <header class="border-b border-brand-border bg-brand-card/80 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full border border-white/40 flex items-center justify-center bg-black shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+          <i data-lucide="scissors" class="w-5 h-5 text-white"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-wide text-white">BLESSED PRIME</h1>
-          <p class="text-xs text-amber-400 font-medium">Barbería & Styling</p>
+          <h1 class="font-bold text-lg leading-tight tracking-wider text-white">BLESSED PRIME</h1>
+          <p class="text-[10px] tracking-widest text-gray-400 uppercase">Barbería & Styling</p>
         </div>
       </div>
-      <button onclick="abrirModalBarbero()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
-        <i class="fa-solid fa-scissors text-amber-400"></i> Panel Barbero
+      
+      <button id="admin-toggle-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
+        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+        <span>Panel Barbero</span>
       </button>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="max-w-4xl mx-auto px-4 pt-6 space-y-8">
+  <!-- Content Container -->
+  <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow">
 
-    <!-- Hero Banner -->
-    <section class="text-center py-6 glass-card rounded-2xl px-4 relative overflow-hidden">
-      <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
-      <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold px-3 py-1 rounded-full inline-block mb-3">
-        <i class="fa-solid fa-star text-amber-400 mr-1"></i> Reserva tu cupo en línea
-      </span>
-      <h2 class="text-2xl md:text-3xl font-extrabold text-white">Agenda tu Cita al Instante</h2>
-      <p class="text-slate-400 text-sm mt-2 max-w-md mx-auto">Selecciona tu barbero de preferencia, el servicio y la hora que mejor se acomode a ti.</p>
-    </section>
-
-    <!-- Agendamiento Form Section -->
-    <section class="glass-card rounded-2xl p-6 shadow-xl relative">
-      <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2 border-b border-slate-800 pb-3">
-        <i class="fa-regular fa-calendar-check text-amber-400"></i> Detalles de la Reserva
-      </h3>
-
-      <form id="formAgendamiento" onsubmit="guardarCita(event)" class="space-y-6">
-
-        <!-- 1. Seleccionar Barbero -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-300 mb-2">1. Selecciona tu Barbero <span class="text-amber-400">*</span></label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            
-            <label class="relative flex items-center p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition">
-              <input type="radio" name="barbero" value="Jaider Ríos" required onchange="validarFechaPorBarbero()" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-              <div class="ml-3">
-                <span class="block text-sm font-bold text-white">Jaider Ríos</span>
-                <span class="block text-xs text-amber-400 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Lun, Mar, Mié y Dom</span>
-              </div>
-            </label>
-
-            <label class="relative flex items-center p-3 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition">
-              <input type="radio" name="barbero" value="Marcos Macías" required onchange="validarFechaPorBarbero()" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-              <div class="ml-3">
-                <span class="block text-sm font-bold text-white">Marcos Macías</span>
-                <span class="block text-xs text-amber-400 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Jue, Vie y Sáb</span>
-              </div>
-            </label>
-
-          </div>
-        </div>
-
-        <!-- 2. Seleccionar Servicio -->
-        <div>
-          <label class="block text-sm font-semibold text-slate-300 mb-2">2. Selecciona el Servicio <span class="text-amber-400">*</span></label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="listaServicios">
-            
-            <label class="relative flex items-center justify-between p-3.5 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition group">
-              <div class="flex items-center">
-                <input type="radio" name="servicio" value="Corte de Cabello" data-precio="15000" required class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-                <div class="ml-3">
-                  <span class="block text-sm font-medium text-white">Corte de Cabello</span>
-                  <span class="block text-xs text-slate-400">Asesoría e higienización</span>
-                </div>
-              </div>
-              <span class="text-sm font-bold text-amber-400">$15.000</span>
-            </label>
-
-            <label class="relative flex items-center justify-between p-3.5 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition group">
-              <div class="flex items-center">
-                <input type="radio" name="servicio" value="Barba VIP" data-precio="10000" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-                <div class="ml-3">
-                  <span class="block text-sm font-medium text-white">Barba VIP</span>
-                  <span class="block text-xs text-slate-400">Perfilado y toalla caliente</span>
-                </div>
-              </div>
-              <span class="text-sm font-bold text-amber-400">$10.000</span>
-            </label>
-
-            <label class="relative flex items-center justify-between p-3.5 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition group">
-              <div class="flex items-center">
-                <input type="radio" name="servicio" value="Combo Blessed (Corte + Barba)" data-precio="22000" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-                <div class="ml-3">
-                  <span class="block text-sm font-medium text-white">Combo Blessed</span>
-                  <span class="block text-xs text-slate-400">Corte completo + Barba</span>
-                </div>
-              </div>
-              <span class="text-sm font-bold text-amber-400">$22.000</span>
-            </label>
-
-            <label class="relative flex items-center justify-between p-3.5 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition group">
-              <div class="flex items-center">
-                <input type="radio" name="servicio" value="Corte Infantil" data-precio="15000" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-                <div class="ml-3">
-                  <span class="block text-sm font-medium text-white">Corte Infantil</span>
-                  <span class="block text-xs text-slate-400">Para los más pequeños</span>
-                </div>
-              </div>
-              <span class="text-sm font-bold text-amber-400">$15.000</span>
-            </label>
-
-            <label class="relative flex items-center justify-between p-3.5 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition group">
-              <div class="flex items-center">
-                <input type="radio" name="servicio" value="Limpieza Facial Express" data-precio="12000" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-                <div class="ml-3">
-                  <span class="block text-sm font-medium text-white">Limpieza Facial</span>
-                  <span class="block text-xs text-slate-400">Exfoliación y mascarilla</span>
-                </div>
-              </div>
-              <span class="text-sm font-bold text-amber-400">$12.000</span>
-            </label>
-
-            <label class="relative flex items-center justify-between p-3.5 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:border-amber-500/50 transition group">
-              <div class="flex items-center">
-                <input type="radio" name="servicio" value="Cejas / Delineado" data-precio="5000" class="text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
-                <div class="ml-3">
-                  <span class="block text-sm font-medium text-white">Cejas / Delineado</span>
-                  <span class="block text-xs text-slate-400">Diseño y perfilado</span>
-                </div>
-              </div>
-              <span class="text-sm font-bold text-amber-400">$5.000</span>
-            </label>
-
-          </div>
-        </div>
-
-        <!-- 3. Datos del Cliente y Fecha -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-slate-300 mb-1">3. Nombre Completo <span class="text-amber-400">*</span></label>
-            <input type="text" id="nombreCliente" required placeholder="Tu nombre y apellido" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500 text-sm">
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-slate-300 mb-1">Teléfono / WhatsApp <span class="text-amber-400">*</span></label>
-            <input type="tel" id="telefonoCliente" required placeholder="Ej: 3001234567" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500 text-sm">
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-slate-300 mb-1">4. Fecha de la Cita <span class="text-amber-400">*</span></label>
-            <input type="date" id="fechaCita" required onchange="validarFechaPorBarbero(); cargarHorarios();" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500 text-sm">
-            <p id="errorBarberoFecha" class="text-xs text-red-400 mt-1 hidden"></p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-slate-300 mb-1">5. Hora Disponible <span class="text-amber-400">*</span></label>
-            <select id="horaCita" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500 text-sm">
-              <option value="">Selecciona fecha primero...</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Submit Button -->
-        <button type="submit" id="btnAgendar" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-extrabold py-3.5 rounded-xl shadow-lg shadow-amber-500/20 transition duration-200 text-base flex items-center justify-center gap-2">
-          <i class="fa-solid fa-check-circle"></i> Confirmar y Reservar Cita
-        </button>
-
-      </form>
-    </section>
-
-  </main>
-
-  <!-- Modal Admin / Barbero -->
-  <div id="modalBarbero" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="glass-card w-full max-w-2xl rounded-2xl p-6 shadow-2xl border border-slate-700 max-h-[90vh] flex flex-col">
+    <!-- CLIENT BOOKING VIEW -->
+    <div id="client-view" class="space-y-8">
       
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-scissors text-amber-400"></i> Panel de Control del Barbero
-        </h3>
-        <button onclick="cerrarModalBarbero()" class="text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-xmark text-xl"></i>
-        </button>
+      <!-- Banner / Title -->
+      <div class="text-center space-y-2">
+        <h2 class="text-3xl font-extrabold text-white tracking-tight">Agenda tu Cita</h2>
+        <p class="text-gray-400 text-sm max-w-md mx-auto">
+          Selecciona tu barbero de preferencia, el servicio y tu horario ideal. Confirma tu cita directamente por WhatsApp.
+        </p>
       </div>
 
-      <!-- Login Form (Clave: 2168) -->
-      <div id="loginPanel" class="space-y-4 py-6 text-center">
-        <p class="text-sm text-slate-300">Ingresa el PIN de seguridad para gestionar las citas:</p>
-        <input type="password" id="pinInput" placeholder="PIN de acceso" class="w-48 mx-auto text-center bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white text-lg tracking-widest focus:outline-none focus:border-amber-500">
-        <div>
-          <button onclick="verificarPIN()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-2 rounded-xl text-sm transition">
-            Ingresar
-          </button>
+      <!-- Step 1: Select Barber -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">1</span>
+          <h3 class="font-semibold text-lg text-white">Elige a tu Barbero</h3>
         </div>
-        <p id="errorPin" class="text-xs text-red-400 hidden">PIN incorrecto. Intenta de nuevo.</p>
-      </div>
 
-      <!-- Citas Dashboard -->
-      <div id="dashboardPanel" class="hidden flex-1 overflow-y-auto space-y-4 pr-1">
-        
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-          <div>
-            <span class="text-xs text-slate-400">Total Reservas Guardadas:</span>
-            <span id="contadorCitas" class="text-sm font-bold text-amber-400 ml-1">0</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="barbers-grid">
+          <!-- Dynamic Barbers will load here -->
+        </div>
+      </section>
+
+      <!-- Step 2: Select Service -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">2</span>
+          <h3 class="font-semibold text-lg text-white">Elige un Servicio</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="services-grid">
+          <!-- Dynamic Services will load here -->
+        </div>
+      </section>
+
+      <!-- Step 3: Select Date & Time -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">3</span>
+          <h3 class="font-semibold text-lg text-white">Selecciona Fecha y Hora</h3>
+        </div>
+
+        <div class="bg-brand-card p-5 rounded-2xl border border-brand-border space-y-5">
+          <!-- Date Picker -->
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider">Fecha de la Cita</label>
+            <input type="date" id="booking-date" class="w-full bg-black border border-brand-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors" />
+            <p id="barber-off-notice" class="text-xs text-amber-400 hidden flex items-center gap-1 mt-1 font-medium">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i> <span id="barber-off-text"></span>
+            </p>
+            <p id="sunday-notice" class="text-xs text-amber-400 hidden flex items-center gap-1 mt-1">
+              <i data-lucide="clock" class="w-3.5 h-3.5"></i> Horario de Domingo: 10:00 AM a 5:00 PM
+            </p>
           </div>
-          
-          <!-- Filtro por Barbero -->
-          <select id="filtroBarbero" onchange="renderizarCitas()" class="bg-slate-800 text-xs border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-amber-500">
-            <option value="todos">Todos los barberos</option>
-            <option value="Jaider Ríos">Jaider Ríos</option>
-            <option value="Marcos Macías">Marcos Macías</option>
-          </select>
+
+          <!-- Time Slots Grid -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider">Horarios Disponibles</label>
+              <div class="flex items-center gap-3 text-[11px] text-gray-400">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-white/20 border border-white/40"></span> Libre</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50"></span> Ocupado</span>
+              </div>
+            </div>
+
+            <div id="time-slots-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              <!-- Dynamic time slots -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: Client Info -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">4</span>
+          <h3 class="font-semibold text-lg text-white">Tus Datos de Contacto</h3>
         </div>
 
-        <!-- Citas List -->
-        <div id="listaCitas" class="space-y-3">
-          <!-- Citas insertadas por JS -->
+        <div class="bg-brand-card p-5 rounded-2xl border border-brand-border space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
+            <input type="text" id="client-name" placeholder="Ej: Carlos Mendoza" class="w-full bg-black border border-brand-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Número de Teléfono / WhatsApp</label>
+            <input type="tel" id="client-phone" placeholder="Ej: 3001234567" class="w-full bg-black border border-brand-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Booking Summary & Submit Button -->
+      <div class="bg-brand-card p-5 rounded-2xl border border-white/20 space-y-4">
+        <div class="flex justify-between items-center text-sm border-b border-brand-border pb-3">
+          <span class="text-gray-400">Barbero Atendedor:</span>
+          <span id="summary-barber" class="font-semibold text-white">Ninguno</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-brand-border pb-3">
+          <span class="text-gray-400">Servicio Seleccionado:</span>
+          <span id="summary-service" class="font-semibold text-white">Ninguno</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-brand-border pb-3">
+          <span class="text-gray-400">Fecha y Hora:</span>
+          <span id="summary-datetime" class="font-semibold text-white">Por definir</span>
+        </div>
+        <div class="flex justify-between items-center text-base">
+          <span class="text-gray-300 font-medium">Total a Pagar:</span>
+          <span id="summary-price" class="text-xl font-extrabold text-white">$0 COP</span>
         </div>
 
+        <button id="book-btn" class="w-full bg-white text-black hover:bg-gray-200 font-bold py-4 rounded-xl shadow-lg neon-glow-btn transition-all duration-200 flex items-center justify-center gap-2 text-base">
+          <i data-lucide="check-circle" class="w-5 h-5"></i>
+          <span>Confirmar y Reservar Cita</span>
+        </button>
       </div>
 
     </div>
+
+    <!-- ADMIN DASHBOARD VIEW -->
+    <div id="admin-view" class="space-y-6 hidden">
+      <div class="flex justify-between items-center border-b border-brand-border pb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Panel de Administración</h2>
+          <p class="text-xs text-gray-400">Gestión de citas agendadas por barbero</p>
+        </div>
+        <button id="close-admin-btn" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-colors">
+          Cerrar Panel
+        </button>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-brand-card p-4 rounded-xl border border-brand-border">
+          <p class="text-xs text-gray-400 uppercase tracking-wider">Citas para Hoy</p>
+          <p id="stat-today-count" class="text-2xl font-black text-white mt-1">0</p>
+        </div>
+        <div class="bg-brand-card p-4 rounded-xl border border-brand-border">
+          <p class="text-xs text-gray-400 uppercase tracking-wider">Ingresos Estimados Hoy</p>
+          <p id="stat-today-revenue" class="text-2xl font-black text-emerald-400 mt-1">$0 COP</p>
+        </div>
+        <div class="bg-brand-card p-4 rounded-xl border border-brand-border">
+          <p class="text-xs text-gray-400 uppercase tracking-wider">Total Citas Registradas</p>
+          <p id="stat-total-count" class="text-2xl font-black text-white mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Admin Date & Barber Filter -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-brand-card p-4 rounded-xl border border-brand-border">
+        <div class="flex flex-wrap items-center gap-3">
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Filtrar por Fecha:</label>
+            <input type="date" id="admin-filter-date" class="bg-black border border-brand-border rounded-lg px-3 py-1.5 text-xs text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Filtrar por Barbero:</label>
+            <select id="admin-filter-barber" class="bg-black border border-brand-border rounded-lg px-3 py-1.5 text-xs text-white">
+              <option value="all">Todos los barberos</option>
+              <option value="jaider">Jaider Ríos</option>
+              <option value="marcos">Marcos Macías</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button id="filter-today-btn" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white">Ver Hoy</button>
+          <button id="filter-all-btn" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white">Ver Todas</button>
+        </div>
+      </div>
+
+      <!-- Bookings List Table/Cards -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Listado de Citas</h3>
+        <div id="admin-bookings-list" class="space-y-3">
+          <!-- Dynamic bookings list -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-brand-border bg-black py-6 mt-12 text-center text-xs text-gray-500">
+    <div class="max-w-4xl mx-auto px-4 space-y-2">
+      <p class="font-semibold text-gray-400">Barbería Blessed Prime</p>
+      <p>Teléfonos · Accesorios · Servicio Técnico</p>
+      <p class="text-[10px] text-gray-600 mt-2">© 2026 Blessed Prime. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- PIN Modal for Admin Access -->
+  <div id="pin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-brand-card border border-brand-border rounded-2xl p-6 max-w-xs w-full space-y-4">
+      <div class="text-center">
+        <div class="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mx-auto mb-2">
+          <i data-lucide="lock" class="w-6 h-6 text-white"></i>
+        </div>
+        <h3 class="font-bold text-white text-lg">Acceso Barbero</h3>
+        <p class="text-xs text-gray-400 mt-1">Ingresa el PIN de seguridad (Por defecto: 2168)</p>
+      </div>
+      <input type="password" id="pin-input" maxlength="4" placeholder="****" class="w-full text-center text-2xl tracking-widest bg-black border border-brand-border rounded-xl py-3 text-white focus:outline-none focus:border-white" />
+      <div class="flex gap-2">
+        <button id="pin-cancel-btn" class="w-1/2 py-2.5 rounded-xl border border-brand-border text-xs font-semibold text-gray-300 hover:bg-white/5">Cancelar</button>
+        <button id="pin-submit-btn" class="w-1/2 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-gray-200">Acceder</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Script Principal -->
+  <!-- WhatsApp Confirmation Modal -->
+  <div id="success-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-brand-card border border-brand-border rounded-2xl p-6 max-w-sm w-full space-y-4 text-center">
+      <div class="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto text-emerald-400">
+        <i data-lucide="check" class="w-8 h-8"></i>
+      </div>
+      <h3 class="font-bold text-white text-xl">¡Cita Guardada!</h3>
+      <p class="text-xs text-gray-300">
+        Tu espacio ha quedado agendado en el sistema. Presiona el botón para confirmar con tu barbero por WhatsApp.
+      </p>
+      <a id="whatsapp-send-link" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">
+        <i data-lucide="message-square" class="w-4 h-4"></i>
+        <span>Enviar Confirmación a WhatsApp</span>
+      </a>
+      <button id="modal-close-btn" class="text-xs text-gray-500 underline hover:text-gray-300">Volver al inicio</button>
+    </div>
+  </div>
+
+  <!-- APP JAVASCRIPT -->
   <script>
-    // Inicializar localStorage si no existe
-    if (!localStorage.getItem('citas_blessed_prime')) {
-      localStorage.setItem('citas_blessed_prime', JSON.stringify([]));
-    }
-
-    // Establecer fecha mínima como hoy
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fechaCita').min = hoy;
-
-    // Reglas de días por barbero
-    // 0 = Dom, 1 = Lun, 2 = Mar, 3 = Mié, 4 = Jue, 5 = Vie, 6 = Sáb
-    const diasBarberos = {
-      "Jaider Ríos": [0, 1, 2, 3], // Dom, Lun, Mar, Mié
-      "Marcos Macías": [4, 5, 6]   // Jue, Vie, Sáb
+    // -------------------------------------------------------------
+    // CONFIGURACIÓN DE FIREBASE Y CONSTANTES
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyCklbZ_0Lws_z7Q7hEGlMtIPgBkBXJO1cY",
+      authDomain: "blessed-prime-barberia.firebaseapp.com",
+      projectId: "blessed-prime-barberia",
+      storageBucket: "blessed-prime-barberia.firebasestorage.app",
+      messagingSenderId: "593128447776",
+      appId: "1:593128447776:web:014daa8b2b2faef45fc145"
     };
 
-    function obtenerBarberoSeleccionado() {
-      const radio = document.querySelector('input[name="barbero"]:checked');
-      return radio ? radio.value : null;
+    let db = null;
+    let useLocalStorageFallback = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (e) {
+      console.warn("Usando modo almacenamiento local:", e);
+      useLocalStorageFallback = true;
     }
 
-    // Validar si el barbero trabaja el día seleccionado
-    function validarFechaPorBarbero() {
-      const barbero = obtenerBarberoSeleccionado();
-      const fechaVal = document.getElementById('fechaCita').value;
-      const errorEl = document.getElementById('errorBarberoFecha');
+    const WHATSAPP_NUMBER = "573106506829";
+    const ADMIN_PIN = "1234";
 
-      errorEl.classList.add('hidden');
-      errorEl.textContent = '';
+    // BARBEROS Y SUS DÍAS DE TRABAJO (0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb)
+    const BARBERS = [
+      {
+        id: "jaider",
+        name: "Jaider Ríos",
+        scheduleText: "Lunes, Martes, Miércoles y Domingos",
+        workDays: [1, 2, 3, 0] 
+      },
+      {
+        id: "marcos",
+        name: "Marcos Macías",
+        scheduleText: "Jueves, Viernes y Sábados",
+        workDays: [4, 5, 6] 
+      }
+    ];
 
-      if (!barbero || !fechaVal) return true;
+    const SERVICES = [
+      { id: "corte", name: "Corte de cabello", price: 20000, duration: "35 min", icon: "scissors" },
+      { id: "corte_barba", name: "Corte y barba", price: 25000, duration: "45 min", icon: "user-check" },
+      { id: "corte_barba_vapor", name: "Corte y barba a vapor", price: 30000, duration: "60 min", icon: "sparkles" },
+      { id: "barba", name: "Barba", price: 10000, duration: "20 min", icon: "smile" },
+      { id: "cerquillo_barba", name: "Cerquillo y barba", price: 15000, duration: "20 min", icon: "zap" }
+    ];
 
-      // Obtener día de la semana ajustando zona horaria local
-      const fechaPartes = fechaVal.split('-');
-      const fechaObj = new Date(fechaPartes[0], fechaPartes[1] - 1, fechaPartes[2]);
-      const diaSemana = fechaObj.getDay();
+    // ESTADO DE LA APLICACIÓN
+    let selectedBarber = null;
+    let selectedService = null;
+    let selectedTime = null;
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let activeBookings = [];
 
-      const diasPermitidos = diasBarberos[barbero];
+    // DOM ELEMENTS
+    const barbersGrid = document.getElementById('barbers-grid');
+    const servicesGrid = document.getElementById('services-grid');
+    const bookingDateInput = document.getElementById('booking-date');
+    const barberOffNotice = document.getElementById('barber-off-notice');
+    const barberOffText = document.getElementById('barber-off-text');
+    const sundayNotice = document.getElementById('sunday-notice');
+    const timeSlotsContainer = document.getElementById('time-slots-container');
+    const clientNameInput = document.getElementById('client-name');
+    const clientPhoneInput = document.getElementById('client-phone');
+    const summaryBarber = document.getElementById('summary-barber');
+    const summaryService = document.getElementById('summary-service');
+    const summaryDatetime = document.getElementById('summary-datetime');
+    const summaryPrice = document.getElementById('summary-price');
+    const bookBtn = document.getElementById('book-btn');
+    
+    // ADMIN DOM
+    const adminToggleBtn = document.getElementById('admin-toggle-btn');
+    const adminView = document.getElementById('admin-view');
+    const clientView = document.getElementById('client-view');
+    const closeAdminBtn = document.getElementById('close-admin-btn');
+    const pinModal = document.getElementById('pin-modal');
+    const pinInput = document.getElementById('pin-input');
+    const pinSubmitBtn = document.getElementById('pin-submit-btn');
+    const pinCancelBtn = document.getElementById('pin-cancel-btn');
+    const adminBookingsList = document.getElementById('admin-bookings-list');
+    const adminFilterDate = document.getElementById('admin-filter-date');
+    const adminFilterBarber = document.getElementById('admin-filter-barber');
+    const filterTodayBtn = document.getElementById('filter-today-btn');
+    const filterAllBtn = document.getElementById('filter-all-btn');
 
-      if (!diasPermitidos.includes(diaSemana)) {
-        const diasTexto = barbero === "Jaider Ríos" ? "Lunes, Martes, Miércoles y Domingos" : "Jueves, Viernes y Sábados";
-        errorEl.textContent = `⚠️ ${barbero} solo atiende los días: ${diasTexto}. Por favor cambia el barbero o la fecha.`;
-        errorEl.classList.remove('hidden');
-        document.getElementById('horaCita').innerHTML = '<option value="">Día no disponible para este barbero</option>';
-        return false;
+    // MODAL DOM
+    const successModal = document.getElementById('success-modal');
+    const whatsappSendLink = document.getElementById('whatsapp-send-link');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+
+    // INICIALIZACIÓN
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initDatePicker();
+      renderBarbers();
+      renderServices();
+      setupEventListeners();
+      listenForBookings();
+    });
+
+    function initDatePicker() {
+      const today = new Date().toISOString().split('T')[0];
+      bookingDateInput.value = today;
+      bookingDateInput.min = today;
+      adminFilterDate.value = today;
+      selectedDate = today;
+    }
+
+    // RENDERIZAR BARBEROS
+    function renderBarbers() {
+      barbersGrid.innerHTML = BARBERS.map(barber => `
+        <div data-id="${barber.id}" class="barber-card cursor-pointer bg-brand-card hover:bg-white/5 border border-brand-border p-4 rounded-xl transition-all flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg">
+            ${barber.name.charAt(0)}
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-base">${barber.name}</h4>
+            <p class="text-xs text-gray-400">Días: ${barber.scheduleText}</p>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.barber-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.barber-card').forEach(c => c.classList.remove('border-white', 'bg-white/10', 'neon-border'));
+          card.classList.add('border-white', 'bg-white/10', 'neon-border');
+          const id = card.getAttribute('data-id');
+          selectedBarber = BARBERS.find(b => b.id === id);
+          selectedTime = null;
+          checkBarberAvailability();
+          updateSummary();
+        });
+      });
+    }
+
+    // RENDERIZAR SERVICIOS
+    function renderServices() {
+      servicesGrid.innerHTML = SERVICES.map(srv => `
+        <div data-id="${srv.id}" class="service-card cursor-pointer bg-brand-card hover:bg-white/5 border border-brand-border p-4 rounded-xl transition-all flex justify-between items-center">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <i data-lucide="${srv.icon}" class="w-4 h-4 text-white"></i>
+              <h4 class="font-bold text-white text-sm">${srv.name}</h4>
+            </div>
+            <p class="text-xs text-gray-400">Duración estimada: ${srv.duration}</p>
+          </div>
+          <div class="text-right">
+            <span class="text-sm font-extrabold text-white">$${srv.price.toLocaleString('es-CO')}</span>
+            <span class="block text-[10px] text-gray-500">COP</span>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+
+      document.querySelectorAll('.service-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.service-card').forEach(c => c.classList.remove('border-white', 'bg-white/10', 'neon-border'));
+          card.classList.add('border-white', 'bg-white/10', 'neon-border');
+          const id = card.getAttribute('data-id');
+          selectedService = SERVICES.find(s => s.id === id);
+          updateSummary();
+        });
+      });
+    }
+
+    // VERIFICAR DISPONIBILIDAD DEL BARBERO SEGÚN LA FECHA
+    function checkBarberAvailability() {
+      if (!selectedDate) return true;
+
+      const parts = selectedDate.split('-');
+      const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = dateObj.getDay();
+
+      // Verificar horario de domingo
+      if (dayOfWeek === 0) {
+        sundayNotice.classList.remove('hidden');
+      } else {
+        sundayNotice.classList.add('hidden');
       }
 
+      if (selectedBarber) {
+        const worksToday = selectedBarber.workDays.includes(dayOfWeek);
+        if (!worksToday) {
+          barberOffText.textContent = `${selectedBarber.name} no trabaja los días seleccionados (${selectedBarber.scheduleText}).`;
+          barberOffNotice.classList.remove('hidden');
+          timeSlotsContainer.innerHTML = `<p class="col-span-full text-xs text-amber-400/80 text-center py-4">Por favor selecciona otro día o cambia de barbero.</p>`;
+          return false;
+        } else {
+          barberOffNotice.classList.add('hidden');
+        }
+      }
       return true;
     }
 
-    // Generar horas de atención
-    function cargarHorarios() {
-      const selectHora = document.getElementById('horaCita');
-      const fechaVal = document.getElementById('fechaCita').value;
-      const barbero = obtenerBarberoSeleccionado();
+    // GENERAR BLOQUES DE HORARIO
+    function generateSlotsForDate(dateString) {
+      const parts = dateString.split('-');
+      const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+      const isSunday = (dateObj.getDay() === 0);
+      
+      const startHour = 10;
+      const endHour = isSunday ? 17 : 20; 
+      
+      const slots = [];
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const formattedHour = hour > 12 ? hour - 12 : hour;
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        
+        slots.push(`${formattedHour}:00 ${ampm}`);
+        if (hour < endHour) {
+          slots.push(`${formattedHour}:30 ${ampm}`);
+        }
+      }
+      return slots;
+    }
 
-      if (!validarFechaPorBarbero()) return;
-
-      if (!fechaVal) {
-        selectHora.innerHTML = '<option value="">Selecciona fecha primero...</option>';
+    // RENDERIZAR BLOQUES DE HORARIO
+    function renderTimeSlots() {
+      if (!selectedBarber) {
+        timeSlotsContainer.innerHTML = `<p class="col-span-full text-xs text-gray-500 text-center py-4">Primero selecciona a tu barbero en el Paso 1.</p>`;
         return;
       }
 
-      const fechaPartes = fechaVal.split('-');
-      const fechaObj = new Date(fechaPartes[0], fechaPartes[1] - 1, fechaPartes[2]);
-      const diaSemana = fechaObj.getDay(); // 0 = Domingo
-
-      selectHora.innerHTML = '<option value="">Selecciona una hora...</option>';
-
-      // Horarios según el día
-      let horaInicio = 8;
-      let horaFin = 19; // 7 PM
-
-      if (diaSemana === 0) { // Domingo
-        horaInicio = 8;
-        horaFin = 13; // 1 PM
+      if (!checkBarberAvailability()) {
+        return;
       }
 
-      const citasExistentes = JSON.parse(localStorage.getItem('citas_blessed_prime')) || [];
+      const slots = generateSlotsForDate(selectedDate);
+      
+      // Filtrar citas agendadas únicamente para el barbero seleccionado en esta fecha
+      const bookedTimesForDate = activeBookings
+        .filter(b => b.date === selectedDate && b.barberId === selectedBarber.id && b.status !== 'cancelled')
+        .map(b => b.time);
 
-      for (let h = horaInicio; h < horaFin; h++) {
-        for (let m of [0, 30]) {
-          // Si es domingo a la 1:00 PM no agregar hora extra
-          if (diaSemana === 0 && h === 12 && m === 30) continue;
+      timeSlotsContainer.innerHTML = slots.map(slot => {
+        const isBooked = bookedTimesForDate.includes(slot);
+        const isSelected = selectedTime === slot;
 
-          const horaFormatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-          const horaLabel = formatAMPM(h, m);
-
-          // Verificar si ya está ocupada ESA HORA con ESE BARBERO en ESA FECHA
-          const ocupada = citasExistentes.some(c => c.fecha === fechaVal && c.hora === horaFormatted && c.barbero === barbero);
-
-          const option = document.createElement('option');
-          option.value = horaFormatted;
-          option.textContent = ocupada ? `${horaLabel} - (Ocupado)` : horaLabel;
-          if (ocupada) option.disabled = true;
-
-          selectHora.appendChild(option);
+        if (isBooked) {
+          return `
+            <button disabled class="slot-booked py-2.5 px-2 text-xs font-semibold rounded-xl border flex flex-col items-center justify-center opacity-70">
+              <span>${slot}</span>
+              <span class="text-[9px] uppercase tracking-wider font-bold">Ocupado</span>
+            </button>
+          `;
         }
+
+        const activeClass = isSelected 
+          ? 'bg-white text-black font-bold border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]' 
+          : 'bg-black text-gray-300 border-brand-border hover:border-gray-500';
+
+        return `
+          <button data-time="${slot}" class="time-slot-btn py-2.5 px-2 text-xs rounded-xl border transition-all ${activeClass}">
+            ${slot}
+          </button>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.time-slot-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedTime = btn.getAttribute('data-time');
+          renderTimeSlots();
+          updateSummary();
+        });
+      });
+    }
+
+    // ACTUALIZAR RESUMEN
+    function updateSummary() {
+      summaryBarber.textContent = selectedBarber ? selectedBarber.name : 'Ninguno';
+      summaryService.textContent = selectedService ? selectedService.name : 'Ninguno';
+      summaryPrice.textContent = selectedService ? `$${selectedService.price.toLocaleString('es-CO')} COP` : '$0 COP';
+      
+      if (selectedDate && selectedTime) {
+        summaryDatetime.textContent = `${selectedDate} a las ${selectedTime}`;
+      } else if (selectedDate) {
+        summaryDatetime.textContent = `${selectedDate} (Elige horario)`;
+      } else {
+        summaryDatetime.textContent = 'Por definir';
       }
     }
 
-    function formatAMPM(hours, minutes) {
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      let h = hours % 12;
-      h = h ? h : 12;
-      const m = minutes < 10 ? '0' + minutes : minutes;
-      return `${h}:${m} ${ampm}`;
+    // OBTENER Y ESCUCHAR CITAS
+    function listenForBookings() {
+      if (db && !useLocalStorageFallback) {
+        db.collection("bookings").onSnapshot((snapshot) => {
+          activeBookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderTimeSlots();
+          renderAdminBookings();
+        }, (error) => {
+          useLocalStorageFallback = true;
+          loadFromLocalStorage();
+        });
+      } else {
+        loadFromLocalStorage();
+      }
     }
 
-    // Guardar Cita
-    function guardarCita(e) {
-      e.preventDefault();
+    function loadFromLocalStorage() {
+      const stored = localStorage.getItem('blessed_prime_bookings');
+      activeBookings = stored ? JSON.parse(stored) : [];
+      renderTimeSlots();
+      renderAdminBookings();
+    }
 
-      const barbero = obtenerBarberoSeleccionado();
-      if (!barbero) {
+    function saveBookingData(bookingObj) {
+      if (db && !useLocalStorageFallback) {
+        return db.collection("bookings").add(bookingObj);
+      } else {
+        activeBookings.push(bookingObj);
+        localStorage.setItem('blessed_prime_bookings', JSON.stringify(activeBookings));
+        renderTimeSlots();
+        renderAdminBookings();
+        return Promise.resolve();
+      }
+    }
+
+    // AGENDAR CITA
+    bookBtn.addEventListener('click', async () => {
+      const name = clientNameInput.value.trim();
+      const phone = clientPhoneInput.value.trim();
+
+      if (!selectedBarber) {
         alert("Por favor selecciona un barbero.");
         return;
       }
-
-      if (!validarFechaPorBarbero()) {
-        alert("El barbero seleccionado no labora en la fecha elegida. Por favor corrige la fecha o el barbero.");
-        return;
-      }
-
-      const servicioEl = document.querySelector('input[name="servicio"]:checked');
-      if (!servicioEl) {
+      if (!selectedService) {
         alert("Por favor selecciona un servicio.");
         return;
       }
-
-      const nuevaCita = {
-        id: Date.now(),
-        barbero: barbero,
-        servicio: servicioEl.value,
-        precio: servicioEl.dataset.precio,
-        nombre: document.getElementById('nombreCliente').value,
-        telefono: document.getElementById('telefonoCliente').value,
-        fecha: document.getElementById('fechaCita').value,
-        hora: document.getElementById('horaCita').value,
-        estado: 'Confirmada'
-      };
-
-      let citas = JSON.parse(localStorage.getItem('citas_blessed_prime')) || [];
-      citas.push(nuevaCita);
-      localStorage.setItem('citas_blessed_prime', JSON.stringify(citas));
-
-      alert(`¡Cita agendada con éxito para el ${nuevaCita.fecha} a las ${nuevaCita.hora} con ${nuevaCita.barbero}!`);
-      document.getElementById('formAgendamiento').reset();
-      document.getElementById('horaCita').innerHTML = '<option value="">Selecciona fecha primero...</option>';
-    }
-
-    // Modales y Admin (PIN: 2168)
-    function abrirModalBarbero() {
-      document.getElementById('modalBarbero').classList.remove('hidden');
-      document.getElementById('loginPanel').classList.remove('hidden');
-      document.getElementById('dashboardPanel').classList.add('hidden');
-      document.getElementById('pinInput').value = '';
-      document.getElementById('errorPin').classList.add('hidden');
-    }
-
-    function cerrarModalBarbero() {
-      document.getElementById('modalBarbero').classList.add('hidden');
-    }
-
-    function verificarPIN() {
-      const pin = document.getElementById('pinInput').value;
-      if (pin === '2168') {
-        document.getElementById('loginPanel').classList.add('hidden');
-        document.getElementById('dashboardPanel').classList.remove('hidden');
-        renderizarCitas();
-      } else {
-        document.getElementById('errorPin').classList.remove('hidden');
+      if (!selectedTime) {
+        alert("Por favor elige una hora disponible.");
+        return;
       }
-    }
-
-    function renderizarCitas() {
-      const contenedor = document.getElementById('listaCitas');
-      const filtro = document.getElementById('filtroBarbero').value;
-      let citas = JSON.parse(localStorage.getItem('citas_blessed_prime')) || [];
-
-      // Ordenar por fecha y hora
-      citas.sort((a, b) => new Date(`${a.fecha}T${a.hora}`) - new Date(`${b.fecha}T${b.hora}`));
-
-      if (filtro !== 'todos') {
-        citas = citas.filter(c => c.barbero === filtro);
-      }
-
-      document.getElementById('contadorCitas').textContent = citas.length;
-
-      if (citas.length === 0) {
-        contenedor.innerHTML = '<p class="text-slate-400 text-sm text-center py-6">No hay citas registradas.</p>';
+      if (!name || !phone) {
+        alert("Por favor completa tu nombre y número de WhatsApp.");
         return;
       }
 
-      contenedor.innerHTML = citas.map(c => `
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md font-semibold">${c.barbero}</span>
-              <span class="text-xs text-slate-400"><i class="fa-regular fa-calendar mr-1"></i>${c.fecha}</span>
-              <span class="text-xs text-amber-400 font-bold"><i class="fa-regular fa-clock mr-1"></i>${c.hora}</span>
-            </div>
-            <h4 class="text-sm font-bold text-white">${c.nombre} <span class="text-xs font-normal text-slate-400">(${c.telefono})</span></h4>
-            <p class="text-xs text-slate-300 mt-0.5">${c.servicio} - <span class="text-amber-400 font-bold">$${parseInt(c.precio).toLocaleString()}</span></p>
-          </div>
-          <button onclick="eliminarCita(${c.id})" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg transition self-end sm:self-center">
-            <i class="fa-solid fa-trash mr-1"></i> Cancelar
-          </button>
-        </div>
-      `).join('');
+      // Validar si la cita fue ocupada previamente
+      const isAlreadyBooked = activeBookings.some(
+        b => b.date === selectedDate && b.barberId === selectedBarber.id && b.time === selectedTime && b.status !== 'cancelled'
+      );
+
+      if (isAlreadyBooked) {
+        alert("Lo sentimos, este horario acaba de ser ocupado con este barbero. Por favor elige otro horario.");
+        renderTimeSlots();
+        return;
+      }
+
+      const newBooking = {
+        barberId: selectedBarber.id,
+        barberName: selectedBarber.name,
+        serviceId: selectedService.id,
+        serviceName: selectedService.name,
+        price: selectedService.price,
+        date: selectedDate,
+        time: selectedTime,
+        clientName: name,
+        clientPhone: phone,
+        status: 'confirmed',
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        bookBtn.disabled = true;
+        bookBtn.textContent = "Procesando...";
+        await saveBookingData(newBooking);
+
+        // Mensaje formateado para WhatsApp
+        const msg = `¡Hola Barbería Blessed Prime! 👋🏼%0A%0AQuiero confirmar mi reserva de cita:%0A💈 *Barbero:* ${selectedBarber.name}%0A✂️ *Servicio:* ${selectedService.name}%0A📅 *Fecha:* ${selectedDate}%0A⏰ *Hora:* ${selectedTime}%0A👤 *Nombre:* ${name}%0A📞 *Teléfono:* ${phone}%0A💰 *Valor:* $${selectedService.price.toLocaleString('es-CO')} COP`;
+        
+        whatsappSendLink.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+        successModal.classList.remove('hidden');
+
+        // Resetear campos
+        clientNameInput.value = '';
+        clientPhoneInput.value = '';
+        selectedTime = null;
+        renderTimeSlots();
+        updateSummary();
+      } catch (err) {
+        alert("Ocurrió un error al guardar la cita. Inténtalo nuevamente.");
+        console.error(err);
+      } finally {
+        bookBtn.disabled = false;
+        bookBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i><span>Confirmar y Reservar Cita</span>`;
+        lucide.createIcons();
+      }
+    });
+
+    // LISTENERS DE EVENTOS
+    function setupEventListeners() {
+      bookingDateInput.addEventListener('change', (e) => {
+        selectedDate = e.target.value;
+        selectedTime = null;
+        renderTimeSlots();
+        updateSummary();
+      });
+
+      modalCloseBtn.addEventListener('click', () => {
+        successModal.classList.add('hidden');
+      });
+
+      adminToggleBtn.addEventListener('click', () => {
+        pinModal.classList.remove('hidden');
+        pinInput.focus();
+      });
+
+      pinCancelBtn.addEventListener('click', () => {
+        pinModal.classList.add('hidden');
+        pinInput.value = '';
+      });
+
+      pinSubmitBtn.addEventListener('click', checkPin);
+      pinInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') checkPin();
+      });
+
+      closeAdminBtn.addEventListener('click', () => {
+        adminView.classList.add('hidden');
+        clientView.classList.remove('hidden');
+      });
+
+      adminFilterDate.addEventListener('change', renderAdminBookings);
+      adminFilterBarber.addEventListener('change', renderAdminBookings);
+
+      filterTodayBtn.addEventListener('click', () => {
+        const today = new Date().toISOString().split('T')[0];
+        adminFilterDate.value = today;
+        renderAdminBookings();
+      });
+      filterAllBtn.addEventListener('click', () => {
+        adminFilterDate.value = '';
+        adminFilterBarber.value = 'all';
+        renderAdminBookings();
+      });
     }
 
-    function eliminarCita(id) {
-      if (confirm('¿Estás seguro de cancelar esta cita?')) {
-        let citas = JSON.parse(localStorage.getItem('citas_blessed_prime')) || [];
-        citas = citas.filter(c => c.id !== id);
-        localStorage.setItem('citas_blessed_prime', JSON.stringify(citas));
-        renderizarCitas();
+    function checkPin() {
+      if (pinInput.value === ADMIN_PIN) {
+        pinModal.classList.add('hidden');
+        pinInput.value = '';
+        clientView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        renderAdminBookings();
+      } else {
+        alert("PIN incorrecto. Inténtalo nuevamente.");
+        pinInput.value = '';
+      }
+    }
+
+    // RENDERIZAR PANEL DE ADMINISTRACIÓN
+    function renderAdminBookings() {
+      const filterDate = adminFilterDate.value;
+      const filterBarber = adminFilterBarber.value;
+      let filtered = [...activeBookings];
+
+      if (filterDate) {
+        filtered = filtered.filter(b => b.date === filterDate);
+      }
+
+      if (filterBarber !== 'all') {
+        filtered = filtered.filter(b => b.barberId === filterBarber);
+      }
+
+      filtered.sort((a, b) => new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`));
+
+      // Métricas de hoy
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayBookings = activeBookings.filter(b => b.date === todayStr && b.status !== 'cancelled');
+      const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.price || 0), 0);
+
+      document.getElementById('stat-today-count').textContent = todayBookings.length;
+      document.getElementById('stat-today-revenue').textContent = `$${todayRevenue.toLocaleString('es-CO')} COP`;
+      document.getElementById('stat-total-count').textContent = activeBookings.filter(b => b.status !== 'cancelled').length;
+
+      if (filtered.length === 0) {
+        adminBookingsList.innerHTML = `<p class="text-sm text-gray-500 py-4 text-center">No hay citas registradas para los filtros aplicados.</p>`;
+        return;
+      }
+
+      adminBookingsList.innerHTML = filtered.map(b => `
+        <div class="bg-brand-card border border-brand-border p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-white text-base">${b.clientName}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full ${b.status === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${b.status === 'cancelled' ? 'Cancelada' : 'Confirmada'}</span>
+            </div>
+            <p class="text-xs text-gray-300">💈 Barbero: <strong class="text-white">${b.barberName || 'Sin especificar'}</strong></p>
+            <p class="text-xs text-gray-400">✂️ ${b.serviceName} - <strong class="text-white">$${(b.price || 0).toLocaleString('es-CO')} COP</strong></p>
+            <p class="text-xs text-gray-400">📅 ${b.date} a las <strong>${b.time}</strong></p>
+            <p class="text-xs text-gray-500">📞 ${b.clientPhone}</p>
+          </div>
+
+          <div class="flex gap-2 w-full sm:w-auto justify-end">
+            <a href="https://wa.me/57${b.clientPhone.replace(/\D/g,'')}" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-emerald-600/30">
+              <i data-lucide="message-square" class="w-3.5 h-3.5"></i> WhatsApp
+            </a>
+            ${b.status !== 'cancelled' ? `
+              <button onclick="cancelBooking('${b.id}')" class="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 border border-red-500/30 text-xs font-semibold hover:bg-red-600/30">
+                Cancelar / Liberar
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // CANCELAR Y LIBERAR HORARIO
+    window.cancelBooking = async function(id) {
+      if (!confirm("¿Seguro que deseas cancelar esta cita y liberar el horario?")) return;
+
+      if (db && !useLocalStorageFallback) {
+        try {
+          await db.collection("bookings").doc(id).update({ status: 'cancelled' });
+        } catch (e) {
+          console.error("Error al cancelar en Firestore:", e);
+        }
+      } else {
+        const item = activeBookings.find(b => b.id === id);
+        if (item) item.status = 'cancelled';
+        localStorage.setItem('blessed_prime_bookings', JSON.stringify(activeBookings));
+        renderTimeSlots();
+        renderAdminBookings();
       }
     }
   </script>
