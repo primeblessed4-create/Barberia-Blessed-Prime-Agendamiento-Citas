@@ -279,7 +279,7 @@
           <i data-lucide="lock" class="w-6 h-6 text-white"></i>
         </div>
         <h3 class="font-bold text-white text-lg">Acceso Barbero</h3>
-        <p class="text-xs text-gray-400 mt-1">Ingresa el PIN de seguridad (Por defecto: 2168)</p>
+        <p class="text-xs text-gray-400 mt-1">Ingresa el PIN de seguridad</p>
       </div>
       <input type="password" id="pin-input" maxlength="4" placeholder="****" class="w-full text-center text-2xl tracking-widest bg-black border border-brand-border rounded-xl py-3 text-white focus:outline-none focus:border-white" />
       <div class="flex gap-2">
@@ -333,21 +333,22 @@
     }
 
     const WHATSAPP_NUMBER = "573106506829";
-    const ADMIN_PIN = "1234";
+    const ADMIN_PIN = "2168"; // PIN Modificado
 
-    // BARBEROS Y SUS DÍAS DE TRABAJO (0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb)
+    // BARBEROS Y DÍAS DE TRABAJO
+    // Días de la semana: 0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb
     const BARBERS = [
       {
         id: "jaider",
         name: "Jaider Ríos",
-        scheduleText: "Lunes, Martes, Miércoles y Domingos",
-        workDays: [1, 2, 3, 0] 
+        scheduleText: "Lunes, Miércoles, Jueves, Viernes, Sábado y Domingo",
+        workDays: [1, 3, 4, 5, 6, 0] 
       },
       {
         id: "marcos",
         name: "Marcos Macías",
-        scheduleText: "Jueves, Viernes y Sábados",
-        workDays: [4, 5, 6] 
+        scheduleText: "Martes, Jueves, Viernes y Sábado",
+        workDays: [2, 4, 5, 6] 
       }
     ];
 
@@ -485,7 +486,6 @@
       const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
       const dayOfWeek = dateObj.getDay();
 
-      // Verificar horario de domingo
       if (dayOfWeek === 0) {
         sundayNotice.classList.remove('hidden');
       } else {
@@ -495,7 +495,7 @@
       if (selectedBarber) {
         const worksToday = selectedBarber.workDays.includes(dayOfWeek);
         if (!worksToday) {
-          barberOffText.textContent = `${selectedBarber.name} no trabaja los días seleccionados (${selectedBarber.scheduleText}).`;
+          barberOffText.textContent = `${selectedBarber.name} no trabaja en la fecha seleccionada (${selectedBarber.scheduleText}).`;
           barberOffNotice.classList.remove('hidden');
           timeSlotsContainer.innerHTML = `<p class="col-span-full text-xs text-amber-400/80 text-center py-4">Por favor selecciona otro día o cambia de barbero.</p>`;
           return false;
@@ -513,7 +513,7 @@
       const isSunday = (dateObj.getDay() === 0);
       
       const startHour = 10;
-      const endHour = isSunday ? 17 : 20; 
+      const endHour = isSunday ? 17 : 20; // 5:00 PM el Domingo, 8:00 PM resto de días
       
       const slots = [];
       for (let hour = startHour; hour <= endHour; hour++) {
@@ -541,7 +541,6 @@
 
       const slots = generateSlotsForDate(selectedDate);
       
-      // Filtrar citas agendadas únicamente para el barbero seleccionado en esta fecha
       const bookedTimesForDate = activeBookings
         .filter(b => b.date === selectedDate && b.barberId === selectedBarber.id && b.status !== 'cancelled')
         .map(b => b.time);
@@ -651,7 +650,6 @@
         return;
       }
 
-      // Validar si la cita fue ocupada previamente
       const isAlreadyBooked = activeBookings.some(
         b => b.date === selectedDate && b.barberId === selectedBarber.id && b.time === selectedTime && b.status !== 'cancelled'
       );
@@ -681,13 +679,11 @@
         bookBtn.textContent = "Procesando...";
         await saveBookingData(newBooking);
 
-        // Mensaje formateado para WhatsApp
         const msg = `¡Hola Barbería Blessed Prime! 👋🏼%0A%0AQuiero confirmar mi reserva de cita:%0A💈 *Barbero:* ${selectedBarber.name}%0A✂️ *Servicio:* ${selectedService.name}%0A📅 *Fecha:* ${selectedDate}%0A⏰ *Hora:* ${selectedTime}%0A👤 *Nombre:* ${name}%0A📞 *Teléfono:* ${phone}%0A💰 *Valor:* $${selectedService.price.toLocaleString('es-CO')} COP`;
         
         whatsappSendLink.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
         successModal.classList.remove('hidden');
 
-        // Resetear campos
         clientNameInput.value = '';
         clientPhoneInput.value = '';
         selectedTime = null;
@@ -780,7 +776,6 @@
 
       filtered.sort((a, b) => new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`));
 
-      // Métricas de hoy
       const todayStr = new Date().toISOString().split('T')[0];
       const todayBookings = activeBookings.filter(b => b.date === todayStr && b.status !== 'cancelled');
       const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.price || 0), 0);
