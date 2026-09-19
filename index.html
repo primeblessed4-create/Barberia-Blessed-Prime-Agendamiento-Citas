@@ -52,6 +52,12 @@
       color: #f87171;
       cursor: not-allowed;
     }
+    .slot-past {
+      background-color: rgba(107, 114, 128, 0.1);
+      border-color: rgba(107, 114, 128, 0.2);
+      color: #6b7280;
+      cursor: not-allowed;
+    }
   </style>
 
   <!-- Firebase SDKs -->
@@ -145,6 +151,7 @@
               <div class="flex items-center gap-3 text-[11px] text-gray-400">
                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-white/20 border border-white/40"></span> Libre</span>
                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50"></span> Ocupado</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-500/20 border border-gray-500/50"></span> Pasado</span>
               </div>
             </div>
 
@@ -551,7 +558,7 @@
       return slots;
     }
 
-    // RENDERIZAR BLOQUES Y BLOQUEAR INTERVALOS POR DURACIÓN DE CITAS
+    // RENDERIZAR BLOQUES Y BLOQUEAR INTERVALOS POR DURACIÓN DE CITAS Y HORAS PASADAS
     function renderTimeSlots() {
       if (!selectedBarber) {
         timeSlotsContainer.innerHTML = `<p class="col-span-full text-xs text-gray-500 text-center py-4">Primero selecciona a tu barbero en el Paso 1.</p>`;
@@ -578,11 +585,29 @@
 
       const currentServiceDuration = selectedService ? selectedService.durationMinutes : 35;
 
+      // Determinar si la fecha seleccionada es HOY para calcular minutos transcurridos
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const isToday = (selectedDate === todayStr);
+      const currentMinutesToday = now.getHours() * 60 + now.getMinutes();
+
       timeSlotsContainer.innerHTML = slots.map(slot => {
         const slotStart = timeToMinutes(slot);
         const slotEnd = slotStart + currentServiceDuration;
 
-        // Comprobar si esta hora o la duración del servicio que se planea solapa con una cita ya existente
+        // 1. Bloqueo por franja horaria pasada (si es hoy)
+        const isPast = isToday && (slotStart < currentMinutesToday);
+
+        if (isPast) {
+          return `
+            <button disabled class="slot-past py-2 px-1 text-[11px] font-semibold rounded-xl border flex flex-col items-center justify-center opacity-40">
+              <span>${slot}</span>
+              <span class="text-[8px] uppercase tracking-wider font-bold">Pasado</span>
+            </button>
+          `;
+        }
+
+        // 2. Bloqueo por solapamiento con citas agendadas
         const isBooked = occupiedIntervals.some(interval => {
           return (slotStart < interval.end && slotEnd > interval.start);
         });
@@ -690,8 +715,19 @@
         return;
       }
 
-      // Validar solapamiento directo
+      // Validar si la hora ya pasó en el momento exacto de enviar
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
       const slotStart = timeToMinutes(selectedTime);
+
+      if (selectedDate === todayStr && slotStart < (now.getHours() * 60 + now.getMinutes())) {
+        alert("El horario seleccionado ya ha transcurrido. Por favor elige una hora posterior.");
+        selectedTime = null;
+        renderTimeSlots();
+        return;
+      }
+
+      // Validar solapamiento directo
       const slotEnd = slotStart + selectedService.durationMinutes;
 
       const barberBookings = activeBookings.filter(
